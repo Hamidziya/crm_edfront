@@ -1,7 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import SignIn from "../pages/signin/SignIn.jsx";
-import Signup from "../pages/Signup/Signup.jsx";
 import Slider from "../components/slider/Slider";
 import Dashboard from "../components/Dashboard/AdminDashboard/Dashboard.jsx";
 import Create from "../pages/Tickets/Create.jsx";
@@ -32,14 +31,6 @@ export const AppRouters = () => {
         element={
           <>
             <SignIn />
-          </>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <>
-            <Signup />
           </>
         }
       />

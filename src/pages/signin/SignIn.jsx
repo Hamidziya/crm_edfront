@@ -9,8 +9,8 @@ import Spinner from "../../components/utils/Sipnners";
 import { FiEye, FiEyeOff } from "react-icons/fi"; // Import eye icons from react-icons/fi
 
 function SignIn() {
-  const [email, setEmail] = useState("admin@gmail.com"); // Set default email
-  const [password, setPassword] = useState("@Password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // State to manage password visibility
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -61,7 +61,6 @@ function SignIn() {
               <input
                 type="email"
                 required
-                value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
               <label>Enter your email</label>
@@ -71,7 +70,6 @@ function SignIn() {
             <div className="d-flex "> <input
                 type={showPassword ? "text" : "password"}
                 required
-                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <label>Enter your password</label>
