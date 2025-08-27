@@ -1,78 +1,211 @@
 // TaskForm.js
-
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import AxiosService from "../../components/utils/ApiService";
-import { Modal, Button } from "react-bootstrap";
+import { Modal, Button, Table } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import styles from "./task.module.css";
-import  Spinner from "../../components/utils/Sipnners"
+import Spinner from "../../components/utils/Sipnners";
+import readXlsxFile from 'read-excel-file';
 
 const TaskForm = ({ refreshTasks }) => {
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importData, setImportData] = useState([]);
+  const [importError, setImportError] = useState("");
+  const fileInputRef = useRef(null);
+
   const handleShow = () => setShowModal(true);
   const handleClose = () => {
     setShowModal(false);
-    setError(""); // Clear error when closing the modal
+    setError("");
+  };
+
+  const handleImportShow = () => setShowImportModal(true);
+  const handleImportClose = () => {
+    setShowImportModal(false);
+    setImportData([]);
+    setImportError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    if (!['xlsx', 'xls', 'csv'].includes(fileExtension)) {
+      setImportError("Please upload a valid Excel or CSV file");
+      return;
+    }
+
+    setImportError("");
+    
+    try {
+      let rows = [];
+      
+      if (fileExtension === 'csv') {
+        // Parse CSV file
+        const text = await file.text();
+        rows = parseCSV(text);
+      } else {
+        // Parse Excel file
+        rows = await readXlsxFile(file);
+      }
+      
+      if (rows.length < 2) {
+        setImportError("File doesn't contain enough data");
+        return;
+      }
+
+      // Extract headers and data rows
+      const headers = rows[0].map(header => 
+        header ? header.toString().toLowerCase().trim() : ''
+      );
+      const dataRows = rows.slice(1);
+      
+      // Check if required columns exist
+      const hasTitle = headers.includes('title');
+      const hasDescription = headers.includes('description');
+      const hasAssignedTo = headers.includes('assignedto') || headers.includes('assigned to');
+      
+      if (!hasTitle || !hasDescription || !hasAssignedTo) {
+        setImportError("File must contain 'title', 'description', and 'assignedTo' columns");
+        return;
+      }
+      
+      // Map data to our format
+      const mappedData = dataRows.map(row => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] ? row[index].toString().trim() : '';
+        });
+        
+        return {
+          title: obj.title || '',
+          description: obj.description || '',
+          assignedTo: obj.assignedto || obj['assigned to'] || obj.assignedto || ''
+        };
+      }).filter(item => item.title && item.description && item.assignedTo);
+      
+      if (mappedData.length === 0) {
+        setImportError("No valid data found in the file");
+        return;
+      }
+      
+      setImportData(mappedData);
+    } catch (error) {
+      console.error("Error parsing file:", error);
+      setImportError("Error parsing file. Please check the format.");
+    }
+  };
+
+  // Simple CSV parser
+  const parseCSV = (text) => {
+    const rows = [];
+    const lines = text.split('\n');
+    
+    for (const line of lines) {
+      if (line.trim()) {
+        // Simple CSV parsing - for more complex CSVs, consider a library like PapaParse
+        const cells = line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+        rows.push(cells);
+      }
+    }
+    
+    return rows;
+  };
+
+  const handleImportSubmit = async () => {
+    if (importData.length === 0) {
+      setImportError("No data to import");
+      return;
+    }
+
+    setImportLoading(true);
+    try {
+      const response = await AxiosService.post("/task/bulk-create", {
+        tasks: importData
+      });
+      
+      toast.success(`Successfully imported ${importData.length} tasks`);
+      refreshTasks();
+      handleImportClose();
+    } catch (error) {
+      console.error("Error importing tasks:", error.message);
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(`Error importing tasks: ${error.response.data.message}`);
+      } else {
+        toast.error("An error occurred while importing tasks.");
+      }
+    } finally {
+      setImportLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-        if (!title || !description || !assignedTo) {
-            setError("All fields are required");
-            return;
-        }
-        setLoading(true);
-        const response = await AxiosService.post("/task/create", {
-            title,
-            description,
-            assignedTo,
-        });
-        toast.success(response.data.message);
+      if (!title || !description || !assignedTo) {
+        setError("All fields are required");
+        return;
+      }
+      setLoading(true);
+      const response = await AxiosService.post("/task/create", {
+        title,
+        description,
+        assignedTo,
+      });
+      toast.success(response.data.message);
 
-        refreshTasks();
+      refreshTasks();
 
-        setTitle("");
-        setDescription("");
-        setAssignedTo("");
-        setError("");
+      setTitle("");
+      setDescription("");
+      setAssignedTo("");
+      setError("");
 
-        handleClose();
+      handleClose();
     } catch (error) {
-        console.error("Error creating task:", error.message);
+      console.error("Error creating task:", error.message);
 
-        // Display the backend error message using toast.error
-        if (error.response && error.response.data && error.response.data.message) {
-            toast.error(`Error creating task: ${error.response.data.message}`);
-        } else {
-            toast.error("An error occurred while creating the task.");
-        }
-    }finally {
-      // Set loading back to false when the form submission is complete (success or error)
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(`Error creating task: ${error.response.data.message}`);
+      } else {
+        toast.error("An error occurred while creating the task.");
+      }
+    } finally {
       setLoading(false);
     }
-};
+  };
 
-
-
-  
   return (
     <div className={styles.taskForm}>
-      <Button variant="primary" onClick={handleShow} disabled={loading}>
-        {loading ? <Spinner  /> : "Create Task"}
-      </Button>
+      <div className="d-flex gap-2">
+        <Button variant="primary" onClick={handleShow} disabled={loading}>
+          {loading ? <Spinner /> : "Add Leads"}
+        </Button>
+        
+        <Button variant="success" onClick={handleImportShow} disabled={importLoading}>
+          {importLoading ? <Spinner /> : "Import Leads"}
+        </Button>
+      </div>
 
+      {/* Add Lead Modal (existing) */}
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Create Task</Modal.Title>
+          <Modal.Title>Add Leads</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit}>
@@ -102,7 +235,7 @@ const TaskForm = ({ refreshTasks }) => {
             </div>
             <div className="mb-3">
               <label htmlFor="assignedTo" className="form-label">
-                Assigned To (User ID) From User Profile
+                Assigned To (User ID)
               </label>
               <input
                 type="text"
@@ -114,9 +247,80 @@ const TaskForm = ({ refreshTasks }) => {
             </div>
             {error && <div className="alert alert-danger">{error}</div>}
             <Button variant="primary" type="submit">
-              Create Task
+              Add Lead
             </Button>
           </form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Import Leads Modal (new) */}
+      <Modal show={showImportModal} onHide={handleImportClose} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Import Leads from Excel/CSV</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label htmlFor="fileUpload" className="form-label">
+              Upload File (Excel or CSV)
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="form-control"
+              id="fileUpload"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+            />
+            <div className="form-text">
+              Your file must include columns for: title, description, and assignedTo
+            </div>
+          </div>
+          
+          {importError && (
+            <div className="alert alert-danger">{importError}</div>
+          )}
+          
+          {importData.length > 0 && (
+            <div>
+              <h6>Preview ({importData.length} records found):</h6>
+              <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <Table striped bordered size="sm">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Description</th>
+                      <th>Assigned To</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importData.slice(0, 5).map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.title}</td>
+                        <td>{item.description}</td>
+                        <td>{item.assignedTo}</td>
+                      </tr>
+                    ))}
+                    {importData.length > 5 && (
+                      <tr>
+                        <td colSpan="3" className="text-center">
+                          ... and {importData.length - 5} more records
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </div>
+              
+              <Button 
+                variant="success" 
+                onClick={handleImportSubmit}
+                disabled={importLoading}
+                className="mt-3"
+              >
+                {importLoading ? <Spinner /> : `Import ${importData.length} Leads`}
+              </Button>
+            </div>
+          )}
         </Modal.Body>
       </Modal>
     </div>

@@ -89,10 +89,10 @@ function AdminNavLinks() {
         <CDBSidebarMenuItem icon="ticket">Tickets</CDBSidebarMenuItem>
       </NavLink>
       <NavLink exact to="/createTask" activeClassName="activeClicked">
-        <CDBSidebarMenuItem icon="file">Create Task</CDBSidebarMenuItem>
+        <CDBSidebarMenuItem icon="file">Add Leads</CDBSidebarMenuItem>
       </NavLink>
       <NavLink exact to="/Submitedtask" activeClassName="activeClicked">
-        <CDBSidebarMenuItem icon="list-check">Tasks List</CDBSidebarMenuItem>
+        <CDBSidebarMenuItem icon="list-check">Leads List</CDBSidebarMenuItem>
       </NavLink>
     </>
   );
