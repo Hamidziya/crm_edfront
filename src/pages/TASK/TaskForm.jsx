@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import styles from "./task.module.css";
 import Spinner from "../../components/utils/Sipnners";
-import readXlsxFile from 'read-excel-file';
+import readXlsxFile from "read-excel-file";
 
 const TaskForm = ({ refreshTasks }) => {
   const [showModal, setShowModal] = useState(false);
@@ -42,19 +42,19 @@ const TaskForm = ({ refreshTasks }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const fileExtension = file.name.split('.').pop().toLowerCase();
-    
-    if (!['xlsx', 'xls', 'csv'].includes(fileExtension)) {
+    const fileExtension = file.name.split(".").pop().toLowerCase();
+
+    if (!["xlsx", "xls", "csv"].includes(fileExtension)) {
       setImportError("Please upload a valid Excel or CSV file");
       return;
     }
 
     setImportError("");
-    
+
     try {
       let rows = [];
-      
-      if (fileExtension === 'csv') {
+
+      if (fileExtension === "csv") {
         // Parse CSV file
         const text = await file.text();
         rows = parseCSV(text);
@@ -62,47 +62,58 @@ const TaskForm = ({ refreshTasks }) => {
         // Parse Excel file
         rows = await readXlsxFile(file);
       }
-      
+
       if (rows.length < 2) {
         setImportError("File doesn't contain enough data");
         return;
       }
 
       // Extract headers and data rows
-      const headers = rows[0].map(header => 
-        header ? header.toString().toLowerCase().trim() : ''
+      const headers = rows[0].map((header) =>
+        header ? header.toString().toLowerCase().trim() : ""
       );
       const dataRows = rows.slice(1);
-      
+
       // Check if required columns exist
-      const hasTitle = headers.includes('title');
-      const hasDescription = headers.includes('description');
-      const hasAssignedTo = headers.includes('assignedto') || headers.includes('assigned to');
-      
-      if (!hasTitle || !hasDescription || !hasAssignedTo) {
-        setImportError("File must contain 'title', 'description', and 'assignedTo' columns");
+      const hasTitle = headers.includes("title");
+      const hasDescription = headers.includes("description");
+      const hasName = headers.includes("name");
+      const hasEmail = headers.includes("email");
+      const hasMobile = headers.includes("mobile");
+
+      if (!hasTitle || !hasDescription || !hasName || !hasEmail || !hasMobile) {
+        setImportError(
+          "File must contain 'title', 'description', 'name', 'email', and 'mobile' columns"
+        );
         return;
       }
-      
+
       // Map data to our format
-      const mappedData = dataRows.map(row => {
-        const obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index] ? row[index].toString().trim() : '';
-        });
-        
-        return {
-          title: obj.title || '',
-          description: obj.description || '',
-          assignedTo: obj.assignedto || obj['assigned to'] || obj.assignedto || ''
-        };
-      }).filter(item => item.title && item.description && item.assignedTo);
-      
+      const mappedData = dataRows
+        .map((row) => {
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header] = row[index] ? row[index].toString().trim() : "";
+          });
+
+          return {
+            title: obj.title || "",
+            description: obj.description || "",
+            name: obj.name || "",
+            email: obj.email || "",
+            mobile: obj.mobile || "",
+          };
+        })
+        .filter(
+          (item) =>
+            item.title && item.description && item.name && item.email && item.mobile
+        );
+
       if (mappedData.length === 0) {
         setImportError("No valid data found in the file");
         return;
       }
-      
+
       setImportData(mappedData);
     } catch (error) {
       console.error("Error parsing file:", error);
@@ -113,16 +124,18 @@ const TaskForm = ({ refreshTasks }) => {
   // Simple CSV parser
   const parseCSV = (text) => {
     const rows = [];
-    const lines = text.split('\n');
-    
+    const lines = text.split("\n");
+
     for (const line of lines) {
       if (line.trim()) {
-        // Simple CSV parsing - for more complex CSVs, consider a library like PapaParse
-        const cells = line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+        // Simple CSV parsing
+        const cells = line
+          .split(",")
+          .map((cell) => cell.trim().replace(/^"|"$/g, ""));
         rows.push(cells);
       }
     }
-    
+
     return rows;
   };
 
@@ -134,19 +147,23 @@ const TaskForm = ({ refreshTasks }) => {
 
     setImportLoading(true);
     try {
-      const response = await AxiosService.post("/task/bulk-create", {
-        tasks: importData
+      await AxiosService.post("/task/bulk-create", {
+        tasks: importData,
       });
-      
-      toast.success(`Successfully imported ${importData.length} tasks`);
+
+      toast.success(`Successfully imported ${importData.length} leads`);
       refreshTasks();
       handleImportClose();
     } catch (error) {
       console.error("Error importing tasks:", error.message);
-      if (error.response && error.response.data && error.response.data.message) {
-        toast.error(`Error importing tasks: ${error.response.data.message}`);
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(`Error importing leads: ${error.response.data.message}`);
       } else {
-        toast.error("An error occurred while importing tasks.");
+        toast.error("An error occurred while importing leads.");
       }
     } finally {
       setImportLoading(false);
@@ -157,8 +174,8 @@ const TaskForm = ({ refreshTasks }) => {
     e.preventDefault();
 
     try {
-      if (!title || !description || !assignedTo) {
-        setError("All fields are required");
+      if (!title || !description) {
+        setError("Title And Description Are Required");
         return;
       }
       setLoading(true);
@@ -180,7 +197,11 @@ const TaskForm = ({ refreshTasks }) => {
     } catch (error) {
       console.error("Error creating task:", error.message);
 
-      if (error.response && error.response.data && error.response.data.message) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
         toast.error(`Error creating task: ${error.response.data.message}`);
       } else {
         toast.error("An error occurred while creating the task.");
@@ -194,18 +215,22 @@ const TaskForm = ({ refreshTasks }) => {
     <div className={styles.taskForm}>
       <div className="d-flex gap-2">
         <Button variant="primary" onClick={handleShow} disabled={loading}>
-          {loading ? <Spinner /> : "Add Leads"}
+          {loading ? <Spinner /> : "Add Lead"}
         </Button>
-        
-        <Button variant="success" onClick={handleImportShow} disabled={importLoading}>
+
+        <Button
+          variant="success"
+          onClick={handleImportShow}
+          disabled={importLoading}
+        >
           {importLoading ? <Spinner /> : "Import Leads"}
         </Button>
       </div>
 
-      {/* Add Lead Modal (existing) */}
+      {/* Add Lead Modal (manual entry) */}
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Leads</Modal.Title>
+          <Modal.Title>Add Lead</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit}>
@@ -253,7 +278,7 @@ const TaskForm = ({ refreshTasks }) => {
         </Modal.Body>
       </Modal>
 
-      {/* Import Leads Modal (new) */}
+      {/* Import Leads Modal */}
       <Modal show={showImportModal} onHide={handleImportClose} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Import Leads from Excel/CSV</Modal.Title>
@@ -272,24 +297,30 @@ const TaskForm = ({ refreshTasks }) => {
               onChange={handleFileUpload}
             />
             <div className="form-text">
-              Your file must include columns for: title, description, and assignedTo
+              Your file must include columns for:{" "}
+              <strong>title, description, name, email, mobile</strong>
             </div>
           </div>
-          
+
           {importError && (
             <div className="alert alert-danger">{importError}</div>
           )}
-          
+
           {importData.length > 0 && (
             <div>
               <h6>Preview ({importData.length} records found):</h6>
-              <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <div
+                className="table-responsive"
+                style={{ maxHeight: "300px", overflowY: "auto" }}
+              >
                 <Table striped bordered size="sm">
                   <thead>
                     <tr>
                       <th>Title</th>
                       <th>Description</th>
-                      <th>Assigned To</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Mobile</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -297,12 +328,14 @@ const TaskForm = ({ refreshTasks }) => {
                       <tr key={index}>
                         <td>{item.title}</td>
                         <td>{item.description}</td>
-                        <td>{item.assignedTo}</td>
+                        <td>{item.name}</td>
+                        <td>{item.email}</td>
+                        <td>{item.mobile}</td>
                       </tr>
                     ))}
                     {importData.length > 5 && (
                       <tr>
-                        <td colSpan="3" className="text-center">
+                        <td colSpan="5" className="text-center">
                           ... and {importData.length - 5} more records
                         </td>
                       </tr>
@@ -310,14 +343,18 @@ const TaskForm = ({ refreshTasks }) => {
                   </tbody>
                 </Table>
               </div>
-              
-              <Button 
-                variant="success" 
+
+              <Button
+                variant="success"
                 onClick={handleImportSubmit}
                 disabled={importLoading}
                 className="mt-3"
               >
-                {importLoading ? <Spinner /> : `Import ${importData.length} Leads`}
+                {importLoading ? (
+                  <Spinner />
+                ) : (
+                  `Import ${importData.length} Leads`
+                )}
               </Button>
             </div>
           )}

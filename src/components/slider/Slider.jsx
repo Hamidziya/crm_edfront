@@ -107,7 +107,7 @@ function UserNavLinks() {
         <CDBSidebarMenuItem icon="columns">Dashboard</CDBSidebarMenuItem>
       </NavLink>
       <NavLink exact to="/userTask" activeClassName="activeClicked">
-        <CDBSidebarMenuItem icon="table">Task</CDBSidebarMenuItem>
+        <CDBSidebarMenuItem icon="table">Leads</CDBSidebarMenuItem>
       </NavLink>
       <NavLink exact to="/create" activeClassName="activeClicked">
         <CDBSidebarMenuItem icon="ticket">Create Tickets</CDBSidebarMenuItem>
@@ -116,7 +116,7 @@ function UserNavLinks() {
         <CDBSidebarMenuItem icon="chart-line">Tickets</CDBSidebarMenuItem>
       </NavLink>
       <NavLink exact to="/submitedByuser" activeClassName="activeClicked">
-        <CDBSidebarMenuItem icon="list-check">Submited Task</CDBSidebarMenuItem>
+        <CDBSidebarMenuItem icon="list-check">Submited Leads</CDBSidebarMenuItem>
       </NavLink>
     </>
   );

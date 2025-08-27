@@ -243,7 +243,7 @@ const fetchTaskUpdates = async (taskId) => {
                   <th>Description</th>
                   <th>Status</th>
                   <th>Assigned To</th>
-                  <th>User ID</th>
+                  <th>Mobile</th>   {/* ✅ changed from User ID */}
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -259,7 +259,7 @@ const fetchTaskUpdates = async (taskId) => {
                       </Badge>
                     </td>
                     <td>{userDetails[task.assignedTo]?.email || "N/A"}</td>
-                    <td>{task.assignedTo}</td>
+                    <td>{task.mobile || "N/A"}</td> {/* ✅ show mobile instead of assignedTo */}
                     <td>
                       <Button 
                         variant="info" 
@@ -291,6 +291,7 @@ const fetchTaskUpdates = async (taskId) => {
                   </tr>
                 ))}
               </tbody>
+
             </Table>
           </div>
 

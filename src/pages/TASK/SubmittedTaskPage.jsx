@@ -99,7 +99,7 @@ const SubmittedTaskPage = () => {
         <Card className={`mb-4`}>
           <Card.Header>
             <i className="fas fa-table me-1"></i>
-            Submitted Tasks
+            Submitted Leads
           </Card.Header>
 
           <Card.Body>
@@ -108,13 +108,13 @@ const SubmittedTaskPage = () => {
                 <div className="text-center">
                   {statusFilter === "Pending" && (
                     <div className="mb-3">
-                      <h4>Pending Tasks: {pendingTasks}</h4>
+                      <h4>Pending Leads: {pendingTasks}</h4>
                     </div>
                   )}
 
                   {statusFilter === "Submitted" && (
                     <div>
-                      <h4>Submitted Tasks: {submittedTaskCount}</h4>
+                      <h4>Submitted Leads: {submittedTaskCount}</h4>
                     </div>
                   )}
                 </div>

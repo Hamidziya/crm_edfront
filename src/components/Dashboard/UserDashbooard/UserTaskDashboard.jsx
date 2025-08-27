@@ -69,17 +69,17 @@ const TaskDashboard = () => {
 
       <Card className={styles.card}>
         <Card.Body>
-          <Card.Title>Total Tasks</Card.Title>
+          <Card.Title>Total Leads</Card.Title>
           <animated.span className={styles.propertyValue}>
             {animatedTotalTasks.value.interpolate((val) => val.toFixed(0))}
           </animated.span>
         </Card.Body>
       </Card>
 
-      {/* Progress bar for Pending Tasks */}
+      {/* Progress bar for Pending Leads */}
       <Card className={`${styles.card} ${styles.warningCard}`}>
         <Card.Body>
-          <Card.Title>Pending Tasks</Card.Title>
+          <Card.Title>Pending Leads</Card.Title>
           <animated.span className={styles.propertyValue}>
             {animatedPendingTasks.value.interpolate((val) => val.toFixed(0))}
           </animated.span>
@@ -91,10 +91,10 @@ const TaskDashboard = () => {
         </Card.Body>
       </Card>
 
-      {/* Progress bar for Submitted Tasks */}
+      {/* Progress bar for Submitted Leads */}
       <Card className={`${styles.card} ${styles.successCard}`}>
         <Card.Body>
-          <Card.Title>Submitted Tasks</Card.Title>
+          <Card.Title>Submitted Leads</Card.Title>
           <animated.span className={styles.propertyValue}>
             {animatedSubmittedTasks.value.interpolate((val) => val.toFixed(0))}
           </animated.span>

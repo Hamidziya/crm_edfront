@@ -46,7 +46,7 @@ const TaskDashboard = () => {
   }, []);
 
   const chartData = {
-    labels: ["Total Tasks", "Pending Tasks", "Submitted Tasks"],
+    labels: ["Total Leads", "Pending Leads", "Submitted Leads"],
     datasets: [
       {
         label: "Tasks",
